@@ -99,7 +99,7 @@ app.post("/users", async (req, res) => {
     .catch((error) => res.json(error));
 });
 
-app.post("/login", async (req, res) => {
+app.post("https://beez2be.vercel.app/login", async (req, res) => {
   const { email, password } = req.body;
 
   userModel.findOne({ email: email }).then((utilisateur) => {
