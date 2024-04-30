@@ -16,7 +16,7 @@ function Login({ setIsLoggedIn }) {
     // const hashedPassword = await bcrypt.hash(password, 10);
     axios
       // .post("http://localhost:3001/login", {
-      .post("/login", {
+      .post("https://beez2be.vercel.app//login", {
         email,
         password,
       })
