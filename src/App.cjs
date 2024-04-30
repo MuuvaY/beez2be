@@ -8,9 +8,14 @@ const userModel = require("./models/Users.cjs");
 const contactModel = require("./models/Contact.cjs");
 const Avis = require("./models/Avis.cjs");
 
+const corsOptions = {
+  origin: "https://beez2be.vercel.app",
+};
+
 const app = express();
 app.use(express.json({ limit: "50mb" }));
-app.use(cors());
+// app.use(cors());
+app.use(cors(corsOptions));
 
 const verifyToken = (req, res, next) => {
   const token = req.headers.authorization;
@@ -98,6 +103,7 @@ app.post("/users", async (req, res) => {
 });
 
 app.post("/login", async (req, res) => {
+  console.log("Requête de connexion reçue :", req.body);
   const { email, password } = req.body;
 
   userModel.findOne({ email: email }).then((utilisateur) => {
