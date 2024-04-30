@@ -26,10 +26,14 @@ const verifyToken = (req, res, next) => {
   });
 };
 
-mongoose.connect("mongodb://localhost:27017/Beez2Be", {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
+// mongoose.connect("mongodb://localhost:27017/Beez2Be", {
+mongoose.connect(
+  "mongodb+srv://myvart:vEhlcaeIDFmx55Ou@beez2be.soselie.mongodb.net/?retryWrites=true&w=majority&appName=beez2be",
+  {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  }
+);
 
 app.get("/entreprises", async (req, res) => {
   console.log("Requête get reçue pour /entreprises");
