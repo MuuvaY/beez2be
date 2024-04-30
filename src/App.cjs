@@ -4,6 +4,8 @@ const cors = require("cors");
 const bcrypt = require("bcryptjs");
 const entrepriseModel = require("./models/Entreprise.cjs");
 const userModel = require("./models/Users.cjs");
+const contactModel = require("./models/Contact.cjs");
+const Avis = require("./models/Avis.cjs");
 
 const app = express();
 app.use(express.json({ limit: "50mb" }));
@@ -56,6 +58,10 @@ app.post("/entreprises", async (req, res) => {
       return Buffer.from(imageBase64.split(",")[1], "base64");
     });
   }
+  // Récupérer l'ID de l'utilisateur à partir du corps de la requête
+  const userId = req.body.userId;
+  // Définir la propriété userId dans l'objet entreprise
+  req.body.userId = userId;
 
   const nouvelleEntreprise = new entrepriseModel(req.body);
 
@@ -98,7 +104,11 @@ app.post("/login", async (req, res) => {
         if (err) {
           res.status(500).json({ success: false, message: "Erreur serveur" });
         } else if (result) {
-          res.json({ success: true, userId: utilisateur._id });
+          res.json({
+            success: true,
+            userId: utilisateur._id,
+            statut: utilisateur.statut,
+          });
         } else {
           res.json({ success: false, message: "Mot de passe incorrect" });
         }
@@ -152,6 +162,162 @@ app.put("/users/:userId", async (req, res) => {
       message:
         "Erreur serveur lors de la mise à jour des informations de l'utilisateur",
     });
+  }
+});
+
+app.get("/users/:userId/companies", async (req, res) => {
+  const userId = req.params.userId;
+  console.log("UserID récupéré pour récupérer les entreprises :", userId);
+
+  try {
+    // Recherchez les entreprises associées à l'utilisateur spécifié
+    const userCompanies = await entrepriseModel.find({ userId: userId });
+    console.log("Entreprises associées à l'utilisateur :", userCompanies);
+
+    res.json(userCompanies);
+  } catch (error) {
+    console.error(
+      "Erreur lors de la récupération des entreprises de l'utilisateur :",
+      error
+    );
+    res.status(500).json({
+      message:
+        "Erreur serveur lors de la récupération des entreprises de l'utilisateur",
+    });
+  }
+});
+
+app.put("/companies/:companyId", async (req, res) => {
+  const companyId = req.params.companyId;
+  console.log("ID de l'entreprise récupéré :", companyId);
+
+  try {
+    const updatedCompany = await entrepriseModel.findByIdAndUpdate(
+      companyId,
+      req.body,
+      { new: true }
+    );
+    if (!updatedCompany) {
+      return res.status(404).json({ message: "Entreprise non trouvée" });
+    }
+    res.json(updatedCompany);
+  } catch (error) {
+    console.error(
+      "Erreur lors de la mise à jour des informations de l'entreprise :",
+      error
+    );
+    res.status(500).json({
+      message:
+        "Erreur serveur lors de la mise à jour des informations de l'entreprise",
+    });
+  }
+});
+
+app.delete("/companies/:companyId", async (req, res) => {
+  const companyId = req.params.companyId;
+
+  try {
+    // Chercher l'entreprise par son ID et la supprimer
+    const deletedEntreprise = await entrepriseModel.findByIdAndDelete(
+      companyId
+    );
+
+    if (!deletedEntreprise) {
+      return res.status(404).json({ message: "Entreprise non trouvée" });
+    }
+
+    // Répondre avec succès si l'entreprise est supprimée avec succès
+    res.json({ message: "Entreprise supprimée avec succès" });
+  } catch (error) {
+    console.error("Erreur lors de la suppression de l'entreprise :", error);
+    res.status(500).json({
+      message: "Erreur serveur lors de la suppression de l'entreprise",
+    });
+  }
+});
+
+app.post("/contact", async (req, res) => {
+  const { email, sujet, message } = req.body;
+
+  try {
+    // Créer une nouvelle instance du modèle de contact avec les données du formulaire
+    const newContact = new contactModel({ email, sujet, message });
+
+    // Sauvegarder le nouveau contact dans la base de données
+    const savedContact = await newContact.save();
+
+    // Envoyer une réponse indiquant que le contact a été enregistré avec succès
+    res
+      .status(201)
+      .json({ message: "Message envoyé avec succès", contact: savedContact });
+  } catch (error) {
+    console.error("Erreur lors de l'enregistrement du message :", error);
+    res
+      .status(500)
+      .json({ message: "Erreur serveur lors de l'enregistrement du message" });
+  }
+});
+
+// Route POST pour enregistrer un nouvel avis
+app.post("/avis", async (req, res) => {
+  // Extraire les données de l'avis depuis le corps de la requête
+  const { fullName, rating, comment, entrepriseId } = req.body;
+
+  try {
+    // Créer une nouvelle instance de l'avis avec les données reçues
+    const nouvelAvis = new Avis({
+      fullName,
+      rating,
+      comment,
+      entrepriseId,
+    });
+
+    // Enregistrer le nouvel avis dans la base de données
+    const avisEnregistre = await nouvelAvis.save();
+
+    // Répondre avec succès et renvoyer les détails de l'avis enregistré
+    res
+      .status(201)
+      .json({ message: "Avis enregistré avec succès", avis: avisEnregistre });
+  } catch (error) {
+    // En cas d'erreur, répondre avec le code d'erreur 500 et un message d'erreur
+    console.error("Erreur lors de l'enregistrement de l'avis :", error);
+    res
+      .status(500)
+      .json({ message: "Erreur serveur lors de l'enregistrement de l'avis" });
+  }
+});
+
+app.get("/avisentreprise/:entrepriseId", async (req, res) => {
+  try {
+    const entrepriseId = req.params.entrepriseId;
+    // Requête pour récupérer les avis de l'entreprise spécifiée
+    const avis = await Avis.find({ entrepriseId: entrepriseId });
+    // Répondre avec les avis récupérés
+    res.json(avis);
+  } catch (error) {
+    console.error("Erreur lors de la récupération des avis :", error);
+    res
+      .status(500)
+      .json({ message: "Erreur serveur lors de la récupération des avis" });
+  }
+});
+
+app.get("/avisentreprise/:entrepriseId/count", async (req, res) => {
+  try {
+    const { entrepriseId } = req.params;
+    // Recherchez l'entreprise dans la base de données
+    const entreprise = await Entreprise.findById(entrepriseId);
+    if (!entreprise) {
+      return res.status(404).json({ message: "Entreprise non trouvée" });
+    }
+    // Comptez le nombre d'avis pour cette entreprise
+    const count = await Avis.countDocuments({ entrepriseId });
+    // Renvoyez le nombre total d'avis dans la réponse
+    res.json({ count });
+  } catch (error) {
+    console.error("Erreur lors de la récupération du nombre d'avis :", error);
+    res.status(500).json({ message: "Erreur serveur" });
   }
 });
 

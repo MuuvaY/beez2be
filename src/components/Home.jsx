@@ -25,7 +25,8 @@ function Home() {
         </div>
         <div className="lg:w-1/2">
           <img
-            src="/default-placeholder.png"
+            // src="/default-placeholder.png"
+            src="/building.jpg"
             alt="Description de l'image"
             className="w-full h-auto"
           />

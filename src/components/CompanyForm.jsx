@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import NavBar from "./NavBar";
 import Horaire from "./Horaire";
 import FileBase64 from "react-file-base64";
@@ -11,8 +12,25 @@ function CompanyForm({
   setNouvelleEntreprise,
 }) {
   const [horaireSelected, setHoraireSelected] = useState(false);
-  const [base64Images, setBase64Images] = useState([]); // Utiliser un tableau pour stocker les images
+  const [base64Images, setBase64Images] = useState([]);
   const [errors, setErrors] = useState({});
+  const [userInfo, setUserInfo] = useState(null);
+  const [errorMessage, setErrorMessage] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
+  const navigate = useNavigate();
+
+  const [currentSlides, setCurrentSlides] = useState(
+    JSON.parse(localStorage.getItem("currentSlides")) || []
+  );
+
+  useEffect(() => {
+    const userId = localStorage.getItem("userId");
+    const userStatut = localStorage.getItem("Statut");
+    if (!userId || userStatut === "Particulier") {
+      // Redirigez l'utilisateur s'il n'est pas connecté ou s'il est un particulier
+      navigate("/");
+    }
+  }, [navigate]);
 
   const handleFileUpload = async (files) => {
     try {
@@ -55,6 +73,9 @@ function CompanyForm({
   const handleAjouterEntreprise = async (e) => {
     e.preventDefault();
 
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
     // Vérifiez si les champs obligatoires sont renseignés
     if (
       nouvelleEntreprise.Tel &&
@@ -62,9 +83,15 @@ function CompanyForm({
       nouvelleEntreprise.SiteWeb &&
       nouvelleEntreprise.Email &&
       nouvelleEntreprise.NomEntreprise &&
-      nouvelleEntreprise.Tarif &&
       nouvelleEntreprise.Horaire
     ) {
+      if (
+        !nouvelleEntreprise.SiteWeb.startsWith("http://") &&
+        !nouvelleEntreprise.SiteWeb.startsWith("https://")
+      ) {
+        nouvelleEntreprise.SiteWeb = "https://" + nouvelleEntreprise.SiteWeb;
+      }
+
       // Format des horaires pour l'envoi au backend
       const formattedHours = nouvelleEntreprise.Horaire.map(
         ({ day, open, close, status }) => ({
@@ -75,9 +102,11 @@ function CompanyForm({
         })
       );
 
+      const userId = localStorage.getItem("userId");
       // Créez un nouvel objet avec les horaires correctement formatés et les images
       const newData = {
         ...nouvelleEntreprise,
+        userId,
         Horaire: formattedHours,
         Image: base64Images, // Utilisez le tableau d'images
       };
@@ -91,10 +120,37 @@ function CompanyForm({
           newData
         );
         console.log("Réponse du serveur :", response.data);
+
+        setSuccessMessage("Entreprise ajoutée avec succès.");
+
+        // Mettre à jour l'état de currentSlides pour inclure la nouvelle entreprise
+        const updatedCurrentSlides = [...currentSlides, 0];
+        setCurrentSlides(updatedCurrentSlides);
+
+        setNouvelleEntreprise({
+          Tel: "",
+          Description: "",
+          SiteWeb: "",
+          Email: "",
+          NomEntreprise: "",
+          Horaire: [],
+          Logo: "",
+          Adresse: "",
+        });
+        setBase64Images([]);
+        localStorage.setItem(
+          "currentSlides",
+          JSON.stringify(updatedCurrentSlides)
+        );
+        window.location.reload();
       } catch (error) {
+        setErrorMessage(
+          "Erreur lors de l'ajout de l'entreprise. Veuillez réessayer."
+        );
         console.error("Erreur lors de l'ajout de l'entreprise :", error);
       }
     } else {
+      setErrorMessage("Veuillez remplir tous les champs obligatoires.");
       // Gérez le cas où les champs obligatoires ne sont pas remplis
       console.error("Veuillez remplir tous les champs obligatoires");
     }
@@ -223,22 +279,6 @@ function CompanyForm({
                         />
                       </div>
                       <div className="md:col-span-2">
-                        <label>Tarifs</label>
-                        <input
-                          type="text"
-                          name="Tarif"
-                          id="Tarif"
-                          className="h-10 border mt-1 rounded px-4 w-full bg-gray-50"
-                          value={nouvelleEntreprise.Tarif || ""}
-                          onChange={(e) =>
-                            setNouvelleEntreprise({
-                              ...nouvelleEntreprise,
-                              Tarif: e.target.value,
-                            })
-                          }
-                        />
-                      </div>
-                      <div className="md:col-span-2">
                         <label>Horaire d'ouverture</label>
                         <div>
                           <Horaire
@@ -252,6 +292,23 @@ function CompanyForm({
                           />
                         </div>
                       </div>
+                      <div className="md:col-span-2">
+                        {/* <label>Tarifs</label>
+                        <input
+                          type="text"
+                          name="Tarif"
+                          id="Tarif"
+                          className="h-10 border mt-1 rounded px-4 w-full bg-gray-50"
+                          value={nouvelleEntreprise.Tarif || ""}
+                          onChange={(e) =>
+                            setNouvelleEntreprise({
+                              ...nouvelleEntreprise,
+                              Tarif: e.target.value,
+                            })
+                          }
+                        /> */}
+                      </div>
+
                       <div className="md:col-span-3">
                         <label>Logo</label>
                         <div className="border mt-1 rounded w-full bg-gray-50">
@@ -292,6 +349,16 @@ function CompanyForm({
                       <div className="md:col-span-5 text-right">
                         <div className="inline-flex items-end"></div>
                       </div>
+                    </div>
+                    <div className="lg:col-span-2 flex items-center justify-center">
+                      {errorMessage && (
+                        <p className="text-red-500 text-lg">{errorMessage}</p>
+                      )}
+                      {successMessage && (
+                        <p className="text-green-500 text-lg">
+                          {successMessage}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>

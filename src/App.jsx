@@ -11,8 +11,10 @@ import Register from "./components/Register";
 import NavBar from "./components/NavBar";
 import MyAccount from "./components/MyAccount";
 import Contact from "./components/Contact";
+import Avis from "./components/Avis";
+import AvisEntreprise from "./components/AvisEntreprise";
 
-function App({ updateStatut }) {
+function App() {
   const [entreprise, setEntreprise] = useState([]);
   const [nouvelleEntreprise, setNouvelleEntreprise] = useState({
     NomEntreprise: "",
@@ -21,7 +23,6 @@ function App({ updateStatut }) {
     Email: "",
     Image: [],
     Adresse: "",
-    Tarif: "",
     SiteWeb: "",
     Logo: "",
     Horaire: Array.from({ length: 7 }, () => ({
@@ -32,6 +33,10 @@ function App({ updateStatut }) {
       // status: "",
     })),
   });
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userInfo, setUserInfo] = useState(null);
+  // const [userStatut, setUserStatut] = useState("");
+  const [statut, setStatut] = useState("");
 
   const chargerEntreprises = () => {
     axios
@@ -85,6 +90,8 @@ function App({ updateStatut }) {
       );
       console.log("Response from POST request:", response.data);
 
+      setEntreprise([...entreprise, response.data]);
+
       // Réinitialiser le formulaire ou effectuer d'autres actions nécessaires
       setNouvelleEntreprise({
         NomEntreprise: "",
@@ -93,7 +100,6 @@ function App({ updateStatut }) {
         Email: "",
         Image: [],
         Adresse: "",
-        Tarif: "",
         SiteWeb: "",
         Logo: "",
         Horaire: Array.from({ length: 7 }, () => ({
@@ -111,8 +117,6 @@ function App({ updateStatut }) {
       console.log("Erreur lors de la requête POST :", error.response.data);
     }
   };
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userInfo, setUserInfo] = useState(null);
 
   useEffect(() => {
     const userInfoFromStorage = localStorage.getItem("userInfo");
@@ -127,6 +131,19 @@ function App({ updateStatut }) {
     localStorage.setItem("userInfo", JSON.stringify(data));
   };
 
+  useEffect(() => {
+    const storedUserStatut = localStorage.getItem("statut");
+    if (storedUserStatut) {
+      setStatut(storedUserStatut);
+    }
+  }, []);
+
+  // Fonction pour mettre à jour le statut de l'utilisateur
+  const updateStatut = (newStatut) => {
+    setStatut(newStatut);
+    localStorage.setItem("statut", newStatut); // Stocker le statut de l'utilisateur dans le localStorage
+  };
+
   return (
     <div>
       <BrowserRouter>
@@ -138,6 +155,8 @@ function App({ updateStatut }) {
                 isLoggedIn={isLoggedIn}
                 setIsLoggedIn={setIsLoggedIn}
                 userInfo={userInfo}
+                statut={statut}
+                updateStatut={updateStatut}
               />
             }
           />
@@ -176,6 +195,11 @@ function App({ updateStatut }) {
           <Route
             path="/register"
             element={<Register setIsLoggedIn={setIsLoggedIn} />}
+          />
+          <Route path="/avis/:entrepriseId" element={<Avis />} />
+          <Route
+            path="/avisentreprise/:entrepriseId"
+            element={<AvisEntreprise />}
           />
         </Routes>
       </BrowserRouter>

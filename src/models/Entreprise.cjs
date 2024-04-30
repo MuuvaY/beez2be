@@ -29,10 +29,10 @@ const entrepriseSchema = mongoose.Schema({
       if (!validator.isEmail(v)) throw new Error("Email non valide");
     },
   },
-  Tarif: {
-    type: String,
-    required: true,
-  },
+  // Tarif: {
+  //   type: String,
+  //   required: true,
+  // },
   SiteWeb: {
     type: String,
     required: true,
@@ -69,6 +69,11 @@ const entrepriseSchema = mongoose.Schema({
       },
     },
   ],
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User", // Référence au modèle d'utilisateur
+    required: true,
+  },
 });
 
 entrepriseSchema.pre("save", function (next) {

@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import NavBar from "./NavBar";
-import ImageLoader from "./ImageLoader";
+import { Link, useParams } from "react-router-dom";
 import { Footer } from "flowbite-react";
-
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-
 import { Carousel } from "flowbite-react";
+import Avis from "./Avis";
+import axios from "axios";
 
 import {
   faPhone,
@@ -69,10 +69,21 @@ async function arrayBufferToBase64Logo(buffer) {
   }
 }
 
-function CompanyList({ entreprises }) {
+function CompanyList({ entreprises, avis }) {
   const [base64Images, setBase64Images] = useState([]);
   const [base64Logos, setBase64Logos] = useState([]);
   const { width } = useWindowSize();
+  const [avisCounts, setAvisCounts] = useState({});
+
+  const [currentSlides, setCurrentSlides] = useState(
+    JSON.parse(localStorage.getItem("currentSlides")) ||
+      Array(entreprises.length).fill(0)
+  );
+
+  // Mettre à jour l'état des diapositives dans le stockage local à chaque changement
+  useEffect(() => {
+    localStorage.setItem("currentSlides", JSON.stringify(currentSlides));
+  }, [currentSlides]);
 
   useEffect(() => {
     const fetchBase64ImagesAndLogos = async () => {
@@ -97,32 +108,13 @@ function CompanyList({ entreprises }) {
         setBase64Images(imagesAndLogos.map((item) => item.base64Images));
         setBase64Logos(imagesAndLogos.map((item) => item.base64Logos));
       } catch (error) {
-        console.error(error.message);
+        console.error("Error fetching base64 images and logos:", error);
       }
     };
 
     fetchBase64ImagesAndLogos();
   }, [entreprises]);
 
-  // const [currentSlide, setCurrentSlide] = useState(0);
-
-  // const previousSlide = () => {
-  //   setCurrentSlide((prevSlide) =>
-  //     prevSlide === 0 ? base64Images.length - 1 : prevSlide - 1
-  //   );
-  // };
-
-  // const nextSlide = () => {
-  //   setCurrentSlide((prevSlide) =>
-  //     prevSlide === base64Images.length - 1 ? 0 : prevSlide + 1
-  //   );
-  // };
-
-  const [currentSlides, setCurrentSlides] = useState(
-    Array(entreprises.length).fill(0)
-  );
-
-  // Function to handle changing to the previous slide for a specific company
   const previousSlide = (index) => {
     setCurrentSlides((prevSlides) => {
       const newSlides = [...prevSlides];
@@ -146,26 +138,55 @@ function CompanyList({ entreprises }) {
     });
   };
 
+  useEffect(() => {
+    const fetchAvisCounts = async () => {
+      try {
+        const counts = {}; // Initialize counts object
+        // Iterate through each entreprise
+        for (const entreprise of entreprises) {
+          // Fetch the total number of avis for the current entreprise
+          const response = await fetch(
+            `http://localhost:3001/avisentreprise/${entreprise._id}`
+          );
+          if (response.ok) {
+            const avisData = await response.json();
+            counts[entreprise._id] = avisData.length; // Store the count
+          } else {
+            console.error("Error fetching avis count:", response.statusText);
+          }
+        }
+        // Update the state with counts object
+        setAvisCounts(counts);
+      } catch (error) {
+        console.error("Error fetching avis counts:", error);
+      }
+    };
+
+    fetchAvisCounts();
+  }, [entreprises]);
+
   return (
     <>
       <div className="company company-list">
         <NavBar />
       </div>
-      <div className="bg-gray-100">
-        <h1 className="text-center mt-8 text-2xl font-bold">Entreprises</h1>
+      <div className="mx-auto my-8 px-4">
+        <h1 className="text-center text-2xl font-bold">Entreprises</h1>
         {entreprises.map((entreprise, index) => (
           <div
             key={entreprise.id}
             className="flex flex-col md:flex-row max-w-4xl mx-auto bg-blue-100 border border-blue-200 shadow-lg rounded-lg overflow-hidden m-4"
           >
-            <div className="carousel w-full">
+            <div className="carousel w-3/6">
               {base64Images[index] && base64Images[index].length > 0 ? (
                 base64Images[index].map((base64Image, imageIndex) => (
                   <div
                     key={`slide-${imageIndex}`}
-                    className={`carousel-item relative w-full ${
-                      currentSlides[index] === imageIndex ? "" : "hidden"
-                    }`}
+                    className={`carousel-item relative w-full`}
+                    style={{
+                      display:
+                        currentSlides[index] === imageIndex ? "block" : "none",
+                    }}
                   >
                     <img
                       src={`data:image/*;base64,${base64Image}`}
@@ -200,18 +221,10 @@ function CompanyList({ entreprises }) {
                     alt="Image par défaut"
                     className="w-full"
                   />
-                  {/* <div className="absolute flex justify-between transform -translate-y-1/2 left-5 right-5 top-1/2">
-                      <a href="#slide4" className="btn btn-circle">
-                        ❮
-                      </a>
-                      <a href="#slide2" className="btn btn-circle">
-                        ❯
-                      </a>
-                    </div> */}
                 </div>
               )}
             </div>
-            <div className="w-full md:w-1/2 p-6 flex flex-col">
+            <div className="w-3/6  p-6 flex flex-col">
               <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-semibold text-gray-900 my-1.5">
                   {entreprise.NomEntreprise}
@@ -233,7 +246,7 @@ function CompanyList({ entreprises }) {
                   <span className="absolute top-0 right-0 inline-block w-3 h-3 bg-primary-red rounded-full"></span>
                 </div>
               </div>
-              <p className="text-lg text-gray-600 mb-4">
+              <p className="text-lg text-gray-600 mb-4 break-words">
                 {entreprise.Description}
               </p>
               <div className="grid grid-cols-2 grids-rows-2 gap-4">
@@ -242,23 +255,29 @@ function CompanyList({ entreprises }) {
                     icon={faPhone}
                     className="companyList-icon inline-block w-5 h-5 xl:w-4 xl:h-4 mr-3 fill-current text-gray-800"
                   />
-                  <a href={`tel:+33${entreprise.Tel}`}>{entreprise.Tel}</a>
+                  <a className="underline" href={`tel:+33${entreprise.Tel}`}>
+                    {entreprise.Tel}
+                  </a>
                 </p>
-                <p className="text-lg text-gray-600">
+                <p className="text-lg text-gray-600 mb-4">
+                  <FontAwesomeIcon
+                    icon={faLocationDot}
+                    className="companyList-icon inline-block w-5 h-5 xl:w-4 xl:h-4 mr-3 fill-current text-gray-800"
+                  />
+                  {entreprise.Adresse}
+                </p>
+              </div>
+              <div>
+                <p className="text-lg text-gray-600 break-words mb-4">
                   <FontAwesomeIcon
                     icon={faEnvelope}
                     className="companyList-icon inline-block w-5 h-5 xl:w-4 xl:h-4 mr-3 fill-current text-gray-800"
                   />
-                  <a href={`mailto:${entreprise.Email}`}>{entreprise.Email}</a>
+                  <a className="underline" href={`mailto:${entreprise.Email}`}>
+                    {entreprise.Email}
+                  </a>
                 </p>
-                <p className="text-lg text-gray-600">
-                  <FontAwesomeIcon
-                    icon={faTag}
-                    className="companyList-icon inline-block w-5 h-5 xl:w-4 xl:h-4 mr-3 fill-current text-gray-800"
-                  />
-                  {entreprise.Tarif}
-                </p>
-                <p className="text-lg text-gray-600">
+                <p className="text-lg text-gray-600 mb-4">
                   <a
                     href={entreprise.SiteWeb}
                     target="_blank"
@@ -272,43 +291,45 @@ function CompanyList({ entreprises }) {
                     {entreprise.SiteWeb}
                   </a>
                 </p>
-                <p className="text-lg text-gray-600 mb-4">
-                  <FontAwesomeIcon
-                    icon={faLocationDot}
-                    className="companyList-icon inline-block w-5 h-5 xl:w-4 xl:h-4 mr-3 fill-current text-gray-800"
-                  />
-                  {entreprise.Adresse}
-                </p>
               </div>
-              <div className="col-span-2">
-                <div
-                  tabIndex={0}
-                  className="collapse collapse-arrow border border-base-300 bg-base-200 cursor-pointer "
-                >
-                  <div className="companyList-horaire text-base font-medium">
-                    Horaire
-                  </div>
-                  <div className="collapse-content">
-                    <ul>
-                      {entreprise.Status === "closed" ? (
-                        <li key="closed" className="mt-2 xl:mt-0">
-                          Fermé
-                        </li>
-                      ) : (
-                        entreprise.Horaire.map((horaire, horaireIndex) => (
-                          <li
-                            key={horaire.id || `horaire-${horaireIndex}`}
-                            className="mt-2 xl:mt-0"
-                          >
-                            {horaire.day} :{" "}
-                            {horaire.status === "closed"
-                              ? "Fermé"
-                              : `${horaire.open} - ${horaire.close}`}
+              <div className="grid grid-cols-2 grids-rows-2 gap-4 ">
+                <div className="flex items-center">
+                  <div
+                    tabIndex={0}
+                    className="collapse collapse-arrow border border-base-300 bg-base-200 cursor-pointer "
+                  >
+                    <div className="companyList-horaire text-base font-medium">
+                      Horaire
+                    </div>
+                    <div className="collapse-content">
+                      <ul>
+                        {entreprise.Status === "closed" ? (
+                          <li key="closed" className="mt-2 xl:mt-0">
+                            Fermé
                           </li>
-                        ))
-                      )}
-                    </ul>
+                        ) : (
+                          entreprise.Horaire.map((horaire, horaireIndex) => (
+                            <li
+                              key={horaire.id || `horaire-${horaireIndex}`}
+                              className="mt-2 xl:mt-0"
+                            >
+                              {horaire.day} :{" "}
+                              {horaire.status === "closed"
+                                ? "Fermé"
+                                : `${horaire.open} - ${horaire.close}`}
+                            </li>
+                          ))
+                        )}
+                      </ul>
+                    </div>
                   </div>
+                </div>
+                <div className="flex items-center">
+                  <p className="text-lg text-gray-600">
+                    <Link to={`/avisentreprise/${entreprise._id}`}>
+                      Voir les avis ({avisCounts[entreprise._id] || 0})
+                    </Link>
+                  </p>
                 </div>
               </div>
             </div>

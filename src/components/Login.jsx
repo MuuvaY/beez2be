@@ -26,6 +26,12 @@ function Login({ setIsLoggedIn }) {
           navigate("/");
           localStorage.setItem("isLoggedIn", "true");
           localStorage.setItem("userId", result.data.userId);
+
+          const { statut } = result.data; // Assurez-vous que votre backend renvoie le statut de l'utilisateur
+          localStorage.setItem(
+            "userInfo",
+            JSON.stringify({ ...result.data, statut })
+          );
         }
       })
       .catch((error) => console.log(error));
