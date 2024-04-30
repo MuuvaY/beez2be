@@ -40,8 +40,8 @@ function App() {
 
   const chargerEntreprises = () => {
     axios
-      // .get("http://localhost:3001/entreprises")
-      .get("/entreprises")
+      .get("http://localhost:3001/entreprises")
+      // .get("/entreprises")
       .then((entreprise) => {
         // console.log("Entreprises chargées avec succès:", entreprise.data);
         setEntreprise(entreprise.data);
@@ -53,8 +53,8 @@ function App() {
 
   useEffect(() => {
     axios
-      // .get("http://localhost:3001/entreprises")
-      .get("/entreprises")
+      .get("http://localhost:3001/entreprises")
+      // .get("/entreprises")
       .then((entreprise) => {
         setEntreprise(entreprise.data);
       })
@@ -86,11 +86,14 @@ function App() {
     };
 
     try {
+      const response = await axios.post(
+        "http://localhost:3001/entreprises",
+        newData
+      );
       // const response = await axios.post(
-      //   "http://localhost:3001/entreprises",
+      //   "/entreprises",
       //   newData
       // );
-      const response = await axios.post("/entreprises", newData);
       console.log("Response from POST request:", response.data);
 
       setEntreprise([...entreprise, response.data]);

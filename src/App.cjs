@@ -1,3 +1,4 @@
+require("dotenv").config();
 const mongoose = require("mongoose");
 const express = require("express");
 const cors = require("cors");
@@ -27,13 +28,10 @@ const verifyToken = (req, res, next) => {
 };
 
 // mongoose.connect("mongodb://localhost:27017/Beez2Be", {
-mongoose.connect(
-  "mongodb+srv://myvart:vEhlcaeIDFmx55Ou@beez2be.soselie.mongodb.net/?retryWrites=true&w=majority&appName=beez2be",
-  {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  }
-);
+mongoose.connect(process.env.DB_URL, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
 
 app.get("/entreprises", async (req, res) => {
   console.log("Requête get reçue pour /entreprises");
@@ -99,7 +97,7 @@ app.post("/users", async (req, res) => {
     .catch((error) => res.json(error));
 });
 
-app.post("https://beez2be.vercel.app/login", async (req, res) => {
+app.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
   userModel.findOne({ email: email }).then((utilisateur) => {
@@ -325,7 +323,9 @@ app.get("/avisentreprise/:entrepriseId/count", async (req, res) => {
   }
 });
 
-const PORT = 3001;
+// const PORT = 3001;
+const PORT = process.env.PORT || 3001;
+
 app.listen(PORT, () => {
   console.log(`Server started on port ${PORT}`);
 });
