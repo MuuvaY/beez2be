@@ -15,6 +15,13 @@ const corsOptions = {
   optionsSuccessStatus: 200,
 };
 app.use(cors(corsOptions));
+console.log("Démarrage de l'application...");
+console.log(`Chemin courant : ${__dirname}`);
+console.log(
+  `Contenu du répertoire courant : ${require("fs").readdirSync(__dirname)}`
+);
+
+// Votre code ici...
 
 const verifyToken = (req, res, next) => {
   const token = req.headers.authorization;
