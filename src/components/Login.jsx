@@ -5,10 +5,6 @@ import { useNavigate } from "react-router-dom";
 
 import NavBar from "./NavBar";
 
-const api = axios.create({
-  baseURL: "https://beez2be.vercel.app", // Remplacez par votre URL de production
-});
-
 function Login({ setIsLoggedIn }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,10 +14,9 @@ function Login({ setIsLoggedIn }) {
     e.preventDefault();
 
     // const hashedPassword = await bcrypt.hash(password, 10);
-    // axios
-    api
-      // .post("http://localhost:3001/login", {
-      .post("/login", {
+    axios
+      .post("http://localhost:3001/login", {
+        // .post("/login", {
         email,
         password,
       })

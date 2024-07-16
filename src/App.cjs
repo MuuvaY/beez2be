@@ -1,4 +1,4 @@
-require("dotenv").config();
+// require("dotenv").config();
 const mongoose = require("mongoose");
 const express = require("express");
 const cors = require("cors");
@@ -8,13 +8,12 @@ const userModel = require("./models/Users.cjs");
 const contactModel = require("./models/Contact.cjs");
 const Avis = require("./models/Avis.cjs");
 
-const corsOptions = {
-  origin: "https://beez2be.vercel.app",
-};
-
 const app = express();
 app.use(express.json({ limit: "50mb" }));
-// app.use(cors());
+const corsOptions = {
+  origin: "https://votre-frontend-url.com", // Remplacez par l'URL de votre application front-end
+  optionsSuccessStatus: 200,
+};
 app.use(cors(corsOptions));
 
 const verifyToken = (req, res, next) => {
@@ -33,7 +32,8 @@ const verifyToken = (req, res, next) => {
 };
 
 // mongoose.connect("mongodb://localhost:27017/Beez2Be", {
-mongoose.connect(process.env.DB_URL, {
+mongoose.connect(import.meta.env.DB_URL, {
+  // mongoose.connect(process.env.DB_URL, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
@@ -103,7 +103,6 @@ app.post("/users", async (req, res) => {
 });
 
 app.post("/login", async (req, res) => {
-  console.log("Requête de connexion reçue :", req.body);
   const { email, password } = req.body;
 
   userModel.findOne({ email: email }).then((utilisateur) => {
@@ -329,9 +328,7 @@ app.get("/avisentreprise/:entrepriseId/count", async (req, res) => {
   }
 });
 
-// const PORT = 3001;
-const PORT = process.env.PORT || 3001;
-
+const PORT = 3001;
 app.listen(PORT, () => {
   console.log(`Server started on port ${PORT}`);
 });
