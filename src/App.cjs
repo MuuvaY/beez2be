@@ -31,8 +31,8 @@ const verifyToken = (req, res, next) => {
   });
 };
 
-// mongoose.connect("mongodb://localhost:27017/Beez2Be", {
-mongoose.connect(import.meta.env.DB_URL, {
+mongoose.connect("mongodb://localhost:27017/Beez2Be", {
+  // mongoose.connect(import.meta.env.DB_URL, {
   // mongoose.connect(process.env.DB_URL, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
