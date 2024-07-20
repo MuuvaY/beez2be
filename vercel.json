@@ -4,5 +4,6 @@
     { "src": "src/App.cjs", "use": "@vercel/node" },
     { "src": "src/App.jsx", "use": "@vercel/node" }
   ],
-  "routes": [{ "src": "/.*", "dest": "src/App.cjs" }]
+  "routes": [{ "src": "/.*", "dest": "src/App.cjs" }],
+  "rewrites": [{ "source": "/api/(.*)", "destination": "/api/$1" }]
 }
