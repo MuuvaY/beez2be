@@ -1,9 +1,15 @@
 {
   "version": 2,
   "builds": [
-    { "src": "src/App.cjs", "use": "@vercel/node" },
-    { "src": "src/App.jsx", "use": "@vercel/node" }
+    {
+      "src": "app.cjs",
+      "use": "@vercel/node"
+    }
   ],
-  "routes": [{ "src": "/.*", "dest": "src/App.cjs" }],
-  "rewrites": [{ "source": "/api/(.*)", "destination": "/api/$1" }]
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "app.cjs"
+    }
+  ]
 }
